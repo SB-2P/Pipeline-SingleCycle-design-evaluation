@@ -1,0 +1,24 @@
+module RegisterFile(Data1 ,Data2 ,RS,RT,write_reg, WriteData, RegW, clk , reset );
+  input [4:0]  RS , RT , write_reg ; 
+  input [31:0] WriteData; 
+  input RegW , clk  , reset; 
+  output [31:0] Data1 , Data2; 
+  
+  reg [31:0] RegArray [31:0]; 
+  
+  	assign Data1 = RegArray[RS];
+   assign Data2 = RegArray[RT];
+	
+	 always @(negedge clk or posedge reset) begin :Write_and_reset_registerFile
+			integer i;
+        if (reset) begin
+            for (i = 0; i < 32; i = i + 1) begin
+                RegArray[i] = 32'b0;
+            end
+        end else begin
+            if (RegW && (write_reg != 5'b0)) begin
+                RegArray[write_reg] = WriteData;
+            end
+        end
+    end
+endmodule

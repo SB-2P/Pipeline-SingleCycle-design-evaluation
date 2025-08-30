@@ -1,0 +1,25 @@
+module Jump_unit(instruction,pc,address_jump,JR,B_signal,IF_flush,S0,S1);
+	input [31:0] instruction,pc;
+	input JR,B_signal;
+	output [31:0] address_jump;
+	output S0,S1,IF_flush;
+	
+	wire [5:0]opcode;
+	wire [25:0]label;
+
+	assign opcode= instruction[31:26];
+	assign label= instruction[25:0];
+
+	parameter Jump=6'h2,JAL=6'h3;//JAL opcode =3
+	wire J;
+	assign J = ((opcode == Jump)? 1'b1:
+					((opcode == JAL)?1'b1:1'b0));
+	//wire [27:0] sign_ext;
+
+	//assign sign_ext = label << 2;
+	assign address_jump = {pc[31:28],label,2'b0};
+
+	assign S0= B_signal | ((~JR)&J);
+	assign S1= JR | B_signal;
+	assign IF_flush = JR | B_signal;
+endmodule

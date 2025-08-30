@@ -1,0 +1,18 @@
+module ZERO(data1,data2,out,zero_signal);
+	input [31:0]data1,data2;
+	output out;
+	input zero_signal;
+	
+assign out = (zero_signal)?(data1 == data2):(data1 != data2);
+ 
+ 
+ /*	  mux2 mux (
+        .data0x(data1 != data2), // comparison when zero_signal is 1
+        .data1x(data1 == data2), // comparison when zero_signal is 0
+        .sel(zero_signal),       // control signal to select between the two
+        .result(out)         // output of the mux
+    );*/
+	 // MUX2_1 mux(.OUT(out), .S(zero_signal), .IN0(data1 == data2), .IN1(data1 != data2));
+	 
+	 //  MUX2_1 mux(.OUT(out), .S(zero_signal), .IN0(data1 != data2), .IN1(data1 == data2));
+endmodule

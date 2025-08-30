@@ -1,0 +1,9 @@
+module memory_Stage(clock,alu_result,write_data,m_signal,memory_out);
+	input clock;
+	input [31:0]alu_result,write_data;
+	input [1:0]m_signal;
+	output [31:0]memory_out;
+	
+	//memory
+	Data_memory datamemory(.address(alu_result[9:0]),.clock(clock),.data(write_data),.rden(m_signal[1]),.wren(m_signal[0]),.q(memory_out));
+endmodule

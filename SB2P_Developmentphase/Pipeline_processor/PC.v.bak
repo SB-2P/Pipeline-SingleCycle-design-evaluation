@@ -1,0 +1,19 @@
+module PC(pc_next,pc_out,pc_hazard,reset,clk);
+	input clk,reset;
+	input  [31:0]pc_next;
+	output reg [31:0]pc_out;
+	input pc_hazard;
+
+	always @(posedge clk , posedge reset)begin
+		if(reset)
+			pc_out <= 32'hFFFFFFFF;
+		else if(pc_hazard)begin
+			pc_out <= pc_out;
+		end
+		else begin
+			pc_out <= pc_next;
+		end
+	end
+	
+		
+endmodule

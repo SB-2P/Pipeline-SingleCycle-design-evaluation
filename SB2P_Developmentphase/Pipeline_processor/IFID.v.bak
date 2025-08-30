@@ -1,0 +1,28 @@
+module IFID (clk, rst,flush, hazard,  //signals for the pipe 
+	     instruction_in, PC4_in,  //data from the Fetch Stage.
+	     
+	     instruction_out, PC4_out //data to the Decode Stage
+	     
+);	
+
+input clk, rst, flush, hazard; 
+input [31:0] instruction_in , PC4_in;
+output reg [31:0] instruction_out, PC4_out;
+
+	always @ (posedge clk ,posedge rst)begin 
+		//flush the pipe if there is a high reset or a flush signal (assuming active high reset)
+		if(rst) begin 
+					instruction_out <= 32'h00000000;
+					PC4_out <= 32'h00000000;
+		end
+		else if( flush | hazard)begin 
+			instruction_out <= 32'h00000000;
+					PC4_out <= 32'h00000000;
+		end
+		//store the data in the pipe register 
+		else begin 
+		instruction_out<=instruction_in;
+		PC4_out<=PC4_in;
+		end
+	end
+endmodule 

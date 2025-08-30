@@ -1,0 +1,26 @@
+module execute(alu_result,write_data,dst_reg,Data1,Data2,immex,pc,rt,rd,ex_signal,clock,reset,address_b,zero_equ,zero_s);
+	output [31:0] alu_result,write_data,address_b;
+	output [4:0] dst_reg;
+	output zero_equ;
+	input [31:0]Data1,Data2,immex,pc;
+	input[4:0] rt,rd;
+	input [8:0] ex_signal;
+	input clock,reset,zero_s;
+	
+	
+	wire [31:0]wire_alu_input1,wire_alu_input2;
+
+	MUX2_1 #(32) muxJAL(.OUT(wire_alu_input1),.S(ex_signal[0]),.IN0(Data1),.IN1(pc));// mux to select input 1 to jal
+
+	Mux4_1 #(32) mux3input(.IN0(Data2),.IN1(immex),.IN2(32'b0),.IN3(32'b0),.S0(ex_signal[7]),.S1(ex_signal[8]),.OUT(wire_alu_input2));
+
+	ALU aludesign(.operand1(wire_alu_input1),.operand2(wire_alu_input2),.opSel(ex_signal[6:3]),.result(alu_result));
+	
+	ZERO zero(.data1(Data1),.data2(Data2),.out(zero_equ),.zero_signal(zero_s));
+	
+	adder32bit #32 adder(.OUT(address_b),.IN1(pc),.IN2(immex));
+	
+	Mux4_1 #(5) muxdest(.IN0(rt),.IN1(rd),.IN2(5'b11111),.IN3(5'b00000),.S0(ex_signal[1]),.S1(ex_signal[2]),.OUT(dst_reg));
+	
+	assign write_data = Data2;
+endmodule

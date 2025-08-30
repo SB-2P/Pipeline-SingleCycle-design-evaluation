@@ -1,0 +1,66 @@
+module decode_Stage(clock,reset,
+		instruction,pc,
+		rt,rs,rd,
+		immx,reg_dist,
+		write_value,
+		Data1_Out_Decode,Data2_Out_Decode,
+		address_b,zero_equ,CU_signal,
+		JR_Signal,Branch,RegWriteEn_wb,
+		AluResult_EXE,AluResult_MEM,Data_MEM,
+		ForwardA,ForwardB
+);
+
+	input [31:0]instruction,pc,write_value,AluResult_EXE,AluResult_MEM,Data_MEM;
+	input [4:0]reg_dist;
+	input clock,reset,RegWriteEn_wb;
+	input [1:0]ForwardA,ForwardB;
+	
+	output zero_equ;
+	output [31:0]immx;
+	output [4:0]rt,rs,rd;
+	output [31:0]address_b,Data1_Out_Decode,Data2_Out_Decode;
+	output JR_Signal,Branch;
+	
+	wire [31:0]data1,data2;
+	wire  MemReadEn, MemtoReg, MemWriteEn, RegWriteEn,JAL_signal,ZERO_s;
+	wire [15:0]imm;
+	wire [3:0] aluop;
+	wire [1:0]RegDst,ALUSrc;
+	wire [5:0]opcode,funct;
+	assign opcode = instruction[31:26];
+	assign rs = instruction[25:21];
+	assign rt = instruction[20:16];
+	assign rd = instruction[15:11];
+	assign imm = instruction[15:0];
+	assign funct = instruction[5:0];
+	wire[31:0] imms;
+
+	output [12:0] CU_signal;
+	assign CU_signal[0]=JAL_signal;
+	assign CU_signal[2:1]=RegDst;
+	assign CU_signal[6:3]=aluop;
+	assign CU_signal[8:7]=ALUSrc;
+	assign CU_signal[9]=MemReadEn;
+	assign CU_signal[10]=MemWriteEn;
+	assign CU_signal[11]=MemtoReg;
+	assign CU_signal[12]=RegWriteEn;
+	Sign_Extend S_E(.in(imm),.out(immx));
+
+	shift_left_2 S_L_2(.in(immx), .out(imms) );
+
+	adder32bit #32 adder(.OUT(address_b),.IN1(pc),.IN2(immx));
+	
+	ZERO zero(.data1(Data1_Out_Decode),.data2(Data2_Out_Decode),.out(zero_equ),.zero_signal(ZERO_s));
+
+	RegisterFile registerfile(.Data1(data1) ,.Data2(data2) , .RS(rs) , .RT(rt) , .write_reg(reg_dist) , 
+			.WriteData(write_value) , .RegW(RegWriteEn_wb) , .clk(clock) ,.reset(reset) );
+			
+	Mux4_1 #(32) MUX_Forwarding1(.IN0(data1),.IN1(AluResult_EXE),.IN2(AluResult_MEM),.IN3(Data_MEM),.S0(ForwardA[0]),.S1(ForwardA[1]),.OUT(Data1_Out_Decode));
+	
+	Mux4_1 #(32) MUX_Forwarding2(.IN0(data2),.IN1(AluResult_EXE),.IN2(AluResult_MEM),.IN3(Data_MEM),.S0(ForwardB[0]),.S1(ForwardB[1]),.OUT(Data2_Out_Decode));
+
+	Control_Unit controlunit(.opcode(opcode),.funct(funct),.aluop(aluop),.RegDst(RegDst),.JAL_signal(JAL_signal),
+			 .Branch(Branch),.MemReadEn(MemReadEn), .MemtoReg(MemtoReg),.MemWriteEn(MemWriteEn),
+			 .RegWriteEn(RegWriteEn), .ALUSrc(ALUSrc),.JR_Signal(JR_Signal),.ZERO_s(ZERO_s));
+  
+endmodule

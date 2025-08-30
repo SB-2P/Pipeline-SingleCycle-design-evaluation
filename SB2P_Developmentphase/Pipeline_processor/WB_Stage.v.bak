@@ -1,0 +1,7 @@
+module WB_Stage(memory_result,alu_result,wb_signal,wb_data);
+	input [31:0]memory_result,alu_result;
+	input wb_signal;
+	output [31:0]wb_data;
+	
+	MUX2_1 #32 muxwb(.OUT(wb_data),.S(wb_data),.IN1(memory_result),.IN2(alu_result));
+endmodule

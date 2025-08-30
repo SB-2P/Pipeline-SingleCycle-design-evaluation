@@ -1,0 +1,21 @@
+module fetch_Stage(clock,reset,pc_hazard,address_jr,address_branch,JR,BEQ,EQU,instruction,pc2out,IF_flush);
+	input clock,reset,pc_hazard;
+	input [31:0]address_jr,address_branch;
+	input JR,BEQ,EQU;//Signal of mux selector
+	output [31:0]instruction,pc2out;
+	output IF_flush;
+	wire [31:0]pc_next,pc_out,address_jump;
+	wire S0,S1,B_taken;
+
+	PC pc(.pc_next(pc_next),.pc_out(pc_out),.pc_hazard(pc_hazard),.reset(reset),.clk(clock));
+
+	Instruction_memory instruction_mem(.address(pc_out[9:0]),.clock(clock),.q(instruction));
+	
+	adder32bit adder_32bit(.OUT(pc2out),.IN1(pc_out),.IN2(32'h1));
+
+	Mux4_1 mux4_1(.IN0(pc2out),.IN1(address_jump),.IN2(address_jr),.IN3(address_branch),.S0(S0),.S1(S1),.OUT(pc_next));
+
+	assign B_taken = BEQ & EQU;//and gate to detect branch is taken or not
+	//jump unit
+	Jump_unit jumpunit(.instruction(instruction),.pc(pc2out),.address_jump(address_jump),.JR(JR),.B_signal(B_taken),.IF_flush(IF_flush),.S0(S0),.S1(S1));
+endmodule

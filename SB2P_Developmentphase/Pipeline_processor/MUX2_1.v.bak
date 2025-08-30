@@ -1,0 +1,13 @@
+module MUX2_1 #(parameter size = 32) (OUT,S,IN0,IN1);
+	input [size-1:0]IN0,IN1;//selcet between branch address or jump address
+	output reg [size-1:0] OUT;
+	input S;// op code for jump from control unit (if op_jump = 1) ==> select address jump after shift left by 2
+
+	always @(*)begin
+		case(S)
+			0: OUT = IN0;
+			1: OUT = IN1;
+		endcase
+	end
+	
+endmodule

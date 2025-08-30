@@ -1,0 +1,51 @@
+module ForwardingUnit (IDEXE_Rs, IDEXE_Rt,         // ID/EXE reigster Index
+			EXEMEM_RegWrite, EXEMEM_Rd,// WriteSignal frem memory stage & Rd Index
+			MEMWB_RegWrite, MEMWB_Rd,  // WriteSignal frem WB stage and Rd Index
+			ForwardA, ForwardB);	   // Alu Selector Line for MuxA & MuxB 
+
+
+input EXEMEM_RegWrite, MEMWB_RegWrite;
+
+input [4:0] IDEXE_Rs, IDEXE_Rt, EXEMEM_Rd, MEMWB_Rd;
+
+output reg [1:0]ForwardA, ForwardB;
+
+always @(*) begin
+
+//default, No Forwarding.
+ForwardA = 2'b00;
+ForwardB = 2'b00;
+
+if ( 	(EXEMEM_RegWrite) &	//If there is a write to the RegisterFile
+ 	(EXEMEM_Rd != 5'b0 ) &	//to a non-zero register
+ 	(EXEMEM_Rd == IDEXE_Rs))//And there is a RAW dependency 
+	begin
+	ForwardA = 2'b10;
+	end
+
+if ( 	(EXEMEM_RegWrite) &	//If there is a write to the RegisterFile
+ 	(EXEMEM_Rd != 5'b0 ) &	//to a non-zero register
+ 	(EXEMEM_Rd == IDEXE_Rt))//And there is a RAW dependency
+	begin
+	ForwardB = 2'b10;
+	end
+
+if ( 	(MEMWB_RegWrite) &	//If there is a write to the RegisterFile
+	(MEMWB_Rd != 5'b0 )&	//to a non-zero register
+	(MEMWB_Rd == IDEXE_Rs)&	//And there is a RAW dependency
+ 	(EXEMEM_Rd != IDEXE_Rs))//And not already a match with the previous Stage
+	begin
+	ForwardA = 2'b01;
+	end
+
+if ( 	(MEMWB_RegWrite)&	//If there is a write to the RegisterFile
+	(MEMWB_Rd != 5'b0 )&	//to a non-zero register
+	(MEMWB_Rd == IDEXE_Rt)& //And there is a RAW dependency
+	(EXEMEM_Rd != IDEXE_Rt))//And not already a match with the previous Stage
+	begin
+	ForwardB = 2'b01;
+	end
+//not having else for the if statemnets is fine, since there is a default value at the start of the always block.
+//latches should not interfere.
+end
+endmodule

@@ -1,0 +1,63 @@
+module pipeline_processor(clock,reset,ProgramCounter);
+	input clock,reset;
+	output ProgramCounter;
+	wire [31:0] data_out1_decode,data_out2_decode,address_branch,instruction,instruction_out,pc4,pc4_out,immex,write_value;
+	wire JR_signal,B_signal,Branch_taken,IF_flush;
+	wire [4:0] rt,rs,rd,reg_dist,rd_out_wb,rd_memory_in,rd_out_exe,rt_execute,rd_execute,rs_execute;
+	wire [12:0]control_unit_signal,control_unit_signalmux,control_unit_signalmux_out;
+	
+	wire [1:0]memory_signal;
+	wire [31:0] data_out1_execute,data_out2_execute,immex_decode;
+	wire [31:0] aluresult,immex_writedata;
+	wire [31:0] alu_result_Mem,immex_memory,memory_out;
+	wire [31:0] WB_out,readdata_out_wb,aluresult_out_wb;
+	wire regwrite_out,memtoreg_out,memread_out,regwrite_out_wb,memtoreg_out_wb,NopSel,pc_hazard,IF_ID_stall,memwrite_out;
+	
+	fetch_Stage Fetch(.clock(clock),.reset(reset),.pc_hazard(pc_hazard),.address_jr(data_out1_decode),.address_branch(address_branch),
+					.JR(JR_signal),.BEQ(B_signal),.EQU(Branch_taken),.instruction(instruction),.pc2out(ProgramCounter),.IF_flush(IF_flush));
+	
+	IFID IF_ID_register(.clk(clock), .rst(reset),.flush(IF_flush), .hazard(IF_ID_stall), 
+	     .instruction_in(instruction), .PC4_in(ProgramCounter),
+	     .instruction_out(instruction_out), .PC4_out(pc4_out) );	
+					
+	HazardDetection hazard(.PC_hazard(pc_hazard) , .IF_ID_Rs() , .IF_ID_Rt() , .IF_ID_stall(IF_ID_stall) , .ID_EX_Rt() , .ID_EX_MemRead() , .NopSel(NopSel) );
+
+	decode_Stage decode(.clock(clock),.reset(reset),.instruction(instruction_out),.pc(pc4_out),.rt(rt),.rs(rs),.rd(rd),
+								.immx(immex),.reg_dist(rd_out_wb),.write_value(WB_out),.data1(data_out1_decode),.data2(data_out2_decode),
+								.address_b(address_branch),.zero_equ(Branch_taken),.CU_signal(control_unit_signal),.JR_Signal(JR_signal),
+								.Branch(B_signal),.RegWriteEn_wb(regwrite_out_wb));	
+	
+	MUX2_1 #(13) mux_nop(.OUT(control_unit_signalmux),.S(NopSel),.IN1(control_unit_signal),.IN2(13'h000));//S from control unit
+	//must edit
+	IDEXE IDEXE_register(
+    .clk(clock), .rst(reset),                     
+    .data1_in(data_out1_decode), .data2_in(data_out2_decode),
+    .signextend_in(immex),
+    .rs_in(rs), .rt_in(rt), .rd_in(rd),
+    .control_unit_signal_in(control_unit_signalmux),
+	 
+    .control_unit_signal_out(control_unit_signalmux_out),
+    .data1_out(data_out1_execute), .data2_out(data_out2_execute),
+    .signextend_out(immex_decode),
+    .rs_out(rs_execute), .rt_out(rt_execute), .rd_out(rd_execute));	
+	
+	execute Execute_stage(.alu_result(aluresult),.write_data(immex_writedata),.dst_reg(rd_memory_in),.Data1(data_out1_execute),
+								.Data2(data_out2_execute),.immex(immex_decode),.pc(pc4_out),.rt(rt_execute),.rd(rd_execute),.ex_signal(control_unit_signalmux_out[8:0]),
+								.alu_result_Mem(alu_result_Mem),.WB_out(WB_out),.forword_in1(),.forword_in2(),.clock(clock),.reset(reset));
+								
+	//forwarding unit
+	
+	EXEMEM EM_register(.clk(clock),.rst(reset),.regwrite_in(control_unit_signalmux_out[12]),.memtoreg_in(control_unit_signalmux_out[11]),.memwrite_in(control_unit_signalmux_out[10]),
+							 .memread_in(control_unit_signalmux_out[9]),.aluresult_in(aluresult),.writedata_in(immex_writedata),.rd_in(rd_memory_in),.regwrite_out(regwrite_out),
+							 .memtoreg_out(memtoreg_out),.memwrite_out(memwrite_out),.memread_out(memread_out),.aluresult_out(alu_result_Mem),.writedata_out(immex_memory),.rd_out(rd_out_exe));
+							 
+	assign memory_signal[0] = memwrite_out;
+	assign memory_signal[1] = memread_out;
+	
+	memory_Stage memory(.clock(clock),.alu_result(alu_result_Mem),.write_data(immex_memory),.m_signal(memory_signal),.memory_out(memory_out));
+	
+	MEMWB EW_register(.clk(clock),.rst(reset),.regwrite_in(regwrite_out),.memtoreg_in(memtoreg_out),.readdata_in(memory_out),.aluresult_in(alu_result_Mem),
+						.rd_in(rd_out_exe),.regwrite_out(regwrite_out_wb),.memtoreg_out(memtoreg_out_wb),.readdata_out(readdata_out_wb),.aluresult_out(aluresult_out_wb),.rd_out(rd_out_wb));                      
+	
+	WB_Stage Write_Back(.memory_result(readdata_out_wb),.alu_result(aluresult_out_wb),.wb_signal(memtoreg_out_wb),.wb_data(WB_out));
+endmodule

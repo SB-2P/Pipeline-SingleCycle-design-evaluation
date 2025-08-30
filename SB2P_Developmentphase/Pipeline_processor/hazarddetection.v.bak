@@ -1,0 +1,38 @@
+module HazardDetection(PC_hazard , IF_ID_Rs , IF_ID_Rt , IF_ID_stall , ID_EX_Rd , ID_EX_MemRead , NopSel,B_taken_signal,ID_EX_Write );
+  
+  input [4:0]  IF_ID_Rs , IF_ID_Rt  , ID_EX_Rd ;
+  input  ID_EX_MemRead ,B_taken_signal,ID_EX_Write ;
+  output reg PC_hazard , IF_ID_stall , NopSel ;
+  
+  always @(*) begin 
+    if(  ID_EX_MemRead && (( ID_EX_Rd == IF_ID_Rs ) || ( ID_EX_Rd == IF_ID_Rt ))) begin
+      // when the pre instruction is load and the current instruction wants to read from a register that the load instruction wants to write to 
+      PC_hazard = 1 ;
+		IF_ID_stall = 1;
+      NopSel = 1;
+    end 
+	 else if (ID_EX_Write && ((ID_EX_Rd == IF_ID_Rs ) || ( ID_EX_Rd == IF_ID_Rt )) )begin
+		if ( (ID_EX_Rd == 0 ) )begin
+			PC_hazard = 0;
+			IF_ID_stall = 0;
+			NopSel = 0;
+		end
+		else begin
+			PC_hazard = 1 ;
+			IF_ID_stall = 1;
+			NopSel = 1;
+		end
+	 end
+	 else if(B_taken_signal)begin
+		PC_hazard = 0 ;
+		IF_ID_stall = 0;
+      NopSel = 1;
+	 end
+	 else begin
+		PC_hazard = 0 ;
+      IF_ID_stall = 0;
+      NopSel = 0;
+	 end
+  end
+    
+ endmodule 

@@ -1,0 +1,23 @@
+module mux4_1 #(parameter size = 32) (IN0,IN1,IN2,IN3,S0,S1,OUT);
+	//input
+	input [size-1:0]IN0,IN1,IN2,IN3;
+	input S0,S1;
+	//output
+	output reg [size-1:0]OUT;
+	
+	wire [1:0]S;
+	assign S[0]= S0;
+	assign S[1]= S1;
+	
+	always @(*) begin
+		case(S)
+		 2'b00: OUT = IN0;
+		 2'b01: OUT = IN1;
+		 2'b10: OUT = IN2;
+		 2'b11: OUT = IN3;
+		 default: OUT=IN0;
+		endcase
+		
+	end
+
+endmodule 
