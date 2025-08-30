@@ -16,5 +16,5 @@ The Cycle Accurate Simulator (CAS) for the pipeline processor is added only as a
 # Credits
 ![Credits](IMAGES/Credits.png)
 
-[Full PDF here](SB2P_Development Phase.pdf)
+[Full PDF here](SB2P_Development.pdf)
 
