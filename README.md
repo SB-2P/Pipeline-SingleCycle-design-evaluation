@@ -7,6 +7,10 @@ the last segment of the document shows testing the processors with suffienct pro
 Also an Assembler is provided along with the ISA used, to test the design for oneself. 
 
 The Cycle Accurate Simulator (CAS) for the pipeline processor is added only as an executable, but the code is open-sourced in a seperate repo : AbdelrahmanSamha/Multithreaded-CAS-pipeline-MIPS-processor 
+Credits can be found at the end of the .readme
+
+# Documentation
+[Full PDF here](SB2P_Development.pdf)
 
 # Datapath view 
 ![Datapath](IMAGES/DataPath.png)
@@ -16,5 +20,5 @@ The Cycle Accurate Simulator (CAS) for the pipeline processor is added only as a
 # Credits
 ![Credits](IMAGES/Credits.png)
 
-[Full PDF here](SB2P_Development.pdf)
+
 
